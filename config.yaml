@@ -1,0 +1,135 @@
+name: "servntire-network"
+
+# Describe what the target network is/does.
+description: "The network which will host car ownership blockchain"
+
+# Schema version of the content. Used by the SDK to apply the corresponding parsing rules.
+version: 2
+
+# The client section used by GO SDK.
+client:
+  # Which organization does this application instance belong to? The value must be the name of an org
+  organization: Org1
+  logging:
+    level: info
+
+
+
+# Global configuration for peer, event service and orderer timeouts
+  peer:
+    timeout:
+      connection: 3s
+      queryResponse: 45s
+      executeTxResponse: 30s
+  eventService:
+    timeout:
+      connection: 3s
+      registrationResponse: 3s
+  orderer:
+    timeout:
+      connection: 3s
+      response: 5s
+
+
+
+  cryptoconfig:
+    path: "${GOPATH}/src/github.com/servntire/car-ownership/fixtures/crypto-config"
+
+
+
+
+  credentialStore:
+    path: "/tmp/hfc-carownership-service-kvs"
+    cryptoStore:
+      path: "/tmp/carownership-service-msp"
+
+
+
+   # BCCSP config for the client. Used by GO SDK.
+  BCCSP:
+    security:
+     enabled: true
+     default:
+      provider: "SW"
+     hashAlgorithm: "SHA2"
+     softVerify: true
+     ephemeral: false
+     level: 256
+
+
+
+  tlsCerts:
+    systemCertPool: false
+
+
+channels:
+  car-ownership:
+    orderers:
+      - orderer.servntire.com
+    peers:
+      peer0.org1.servntire.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+      peer1.org1.servntire.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+
+    chaincodes:
+      # the format follows the "canonical name" of chaincodes by fabric code
+
+
+# list of participating organizations in this network
+organizations:
+  Org1:
+    mspid: Org1MSP
+    cryptoPath:  "peerOrganizations/org1.servntire.com/users/{userName}@org1.servntire.com/msp"
+    peers:
+      - peer0.org1.servntire.com
+      - peer1.org1.servntire.com
+    certificateAuthorities:
+      - ca.org1.servntire.com
+
+# List of orderers to send transaction and channel create/update requests to. For the time being only one orderer is needed.
+orderers:
+  orderer.servntire.com:
+    url: grpcs://localhost:7050
+    grpcOptions:
+      ssl-target-name-override: orderer.servntire.com
+      grpc-max-send-message-length: 15
+    tlsCACerts:
+      path: "${GOPATH}/src/github.com/servntire/car-ownership/fixtures/crypto-config/ordererOrganizations/servntire.com/tlsca/tlsca.servntire.com-cert.pem"
+
+# List of peers to send various requests to, including endorsement, query and event listener registration.
+peers:
+  peer0.org1.servntire.com:
+    url: grpcs://localhost:7051
+    eventUrl: grpcs://localhost:7053
+    grpcOptions:
+      ssl-target-name-override: peer0.org1.servntire.com
+      grpc.http2.keepalive_time: 15
+    tlsCACerts:
+      path: "${GOPATH}/src/github.com/servntire/car-ownership/fixtures/crypto-config/peerOrganizations/org1.servntire.com/tlsca/tlsca.org1.servntire.com-cert.pem"
+
+  peer1.org1.servntire.com:
+    url: grpcs://localhost:8051
+    eventUrl: grpcs://localhost:8053
+    grpcOptions:
+      ssl-target-name-override: peer1.org1.servntire.com
+      grpc.http2.keepalive_time: 15
+    tlsCACerts:
+      path: "${GOPATH}/src/github.com/servntire/car-ownership/fixtures/crypto-config/peerOrganizations/org1.servntire.com/tlsca/tlsca.org1.servntire.com-cert.pem"
+
+
+certificateAuthorities:
+  ca.org1.servntire.com:
+    url: https://localhost:7054
+    httpOptions:
+      verify: false
+    registrar:
+      enrollId: admin
+      enrollSecret: adminpw
+    caName: ca.org1.servntire.com
